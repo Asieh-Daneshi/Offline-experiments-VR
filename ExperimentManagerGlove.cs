@@ -148,7 +148,7 @@ public class ExperimentManagerGlove : MonoBehaviour
         GenerationCube();
 		gridSize=columnLength * rowLength;
 		
-		numberOfPracticeTrials=20;		//10
+		numberOfPracticeTrials=2;		//10
 		numberOfTestTrials=2;			//80
 		// =================================================================================================================================
 		// Starting to control the experiment ==============================================================================================
@@ -251,7 +251,7 @@ public class ExperimentManagerGlove : MonoBehaviour
 	IEnumerator ExperimentStructure()
     {	
 	    InstructionGeneral.SetActive(true);
-	    while(!(Input.GetKey(KeyCode.Return)))
+	    while(!(Input.GetKey(KeyCode.Return)))				// wait until the participant reads the instructions and presses "enter", then continue
 	    {
 		    yield return new WaitForSeconds(Time.deltaTime);
 	    }
@@ -348,7 +348,7 @@ public class ExperimentManagerGlove : MonoBehaviour
 			CanvasBKG.GetComponent<SpriteRenderer>().enabled = false;
 			CanvasObject.GetComponent<Canvas>().enabled = false;
 			//if (responses[trialCounter, 5]==0)
-				yield return new WaitForSeconds(fixationDuration);
+				// yield return new WaitForSeconds(fixationDuration);
 			for(int a = 0; a < 8; a++)
 			{
 				Agents[a].SetActive(true);
@@ -383,69 +383,179 @@ public class ExperimentManagerGlove : MonoBehaviour
 		
 		for(int rund = 0; rund < numberOfRounds; rund++)
 		{
+			for(int it1 = 0; it1 < numberOfTestTrials; it1++)		// practice session
+			{
+			referenceTime1=Time.time;
+			SessionInd=2;						// SessionInd indicates the practice trials (1) and test trials (2)
+			trialCounter=trialCounter+1;
+			
+
+			DominantColor=Random.Range(1,3);	// DC=1: Orange; DC=2: Green
+			C2=StimulusChange(gridSize, DominantColor, SessionInd);
+			StartCoroutine(C2);
+			
+			raiseHandCoroutine = RaiseHand(DominantColor);
+			StartCoroutine(raiseHandCoroutine);
+			
+			while(!((Listner.lUp || Listner.rUp) || (Time.time - referenceTime1) >= trialDuration))
+			{
+				yield return new WaitForSeconds(Time.deltaTime);
+			}
+
+			if(Listner.lUp)
+			{
+				responses[trialCounter, 5] = 2; // Left controller is above the threshold
+			}
+			else if(Listner.rUp)
+			{
+				responses[trialCounter, 5] = 1; // Right controller is above the threshold
+			}
+			else
+			{
+				responses[trialCounter, 5] = 0; // Neither controller is above the threshold
+			}
+			responses[trialCounter,0]=SessionInd; 	// if index==1, it is practice session, else, it is test session
+			responses[trialCounter,1]=catchInd; 	// it is 1 if it is a catch. Otherwise, it is zero
+			responses[trialCounter,2]=R; 			// radius of the circle that agents are standing in it (lower R, higher density)
+			responses[trialCounter,3]=numberOfAgents; 			// number of responding agents
+			responses[trialCounter,4]=LR; 			// right hand:2; left hand:1
+			responses[trialCounter,6]=Time.time-referenceTime1; 			// response time
+			responses[trialCounter,7]=congruencyFactor;
+			
+			raisedGloveColor=responses[trialCounter,5];
+			
+			
+			CanvasObject.GetComponent<Canvas>().enabled = true;
+			CanvasBKG.GetComponent<SpriteRenderer>().enabled = true;
+			
+			StopCoroutine(C2);
+			//dataStringCoroutine = DataStringMaker(responses, trialCounter, MyList);
+			//StartCoroutine(dataStringCoroutine);
+			
+			StopCoroutine(raiseHandCoroutine);
+			
+			for(int a = 0; a < 8; a++)
+			{
+				Agents[a].SetActive(false);
+			}
+			fixationSign.SetActive(true);
+			yield return new WaitForSeconds(fixationDuration);
+			yield return new WaitForSeconds(trialDuration-(Time.time-referenceTime1));
+			print("trialDuration: "+trialDuration+" , "+Time.time+ " , " + referenceTime1);
+			CanvasBKG.GetComponent<SpriteRenderer>().enabled = false;
+			CanvasObject.GetComponent<Canvas>().enabled = false;
+			fixationSign.SetActive(false);
+			// if((responses[trialCounter, 5]!=0 & raisedGloveColor==2 & DominantColor==2) | (responses[trialCounter, 5]!=0 & raisedGloveColor==1 & DominantColor==1))
+			// {
+			// 	CorrectScreen.SetActive(true);
+			// 	print("true");
+			// }
+			// else if(responses[trialCounter, 5]!=0)
+			// {
+			// 	WrongScreen.SetActive(true);
+			// 	print("wrong");
+			// }
+			// else
+			// {
+			// 	MissedScreen.SetActive(true);
+			// 	print("missed");
+			// }
+			
+			
+			//if (responses[trialCounter, 5]==0)
+			for(int a = 0; a < 8; a++)
+			{
+				Agents[a].SetActive(true);
+			}
+			}
+		// after practice session and right before main session		
+		// for(int a = 0; a < 8; a++)
+		// {
+		// 	Agents[a].SetActive(false);
+		// }
+		// CanvasObject.GetComponent<Canvas>().enabled = true;
+		// CanvasBKG.GetComponent<SpriteRenderer>().enabled = true;
+		// Instruction1.SetActive(true);
+		// yield return new WaitForSeconds(10f);
+		// CanvasBKG.GetComponent<SpriteRenderer>().enabled = false;
+		// Instruction1.SetActive(false);
+		// CanvasObject.GetComponent<Canvas>().enabled = false;
+		// for(int a = 0; a < 8; a++)
+		// {
+		// 	Agents[a].SetActive(true);
+		// }
+		
+		
+		
+		
+		
+		
+		
+		
+		
 			// Modifying the density of the group ==================================================================================================
 			// shuffledAnglesArray=new List<float>{-56f,-32f,-8f,16f,40f,-48f,-24f,0f,24f,48f,-40f,-16f,8f,32f,56f};
-			for(int it1 = 0; it1 < numberOfTestTrials; it1++)		// main session block 1
-			{
-				referenceTime1=Time.time;
-				SessionInd=1;						// SessionInd indicates the practice trials (1) and test trials (2)
-				trialCounter=trialCounter+1;
-				
-				CanvasObject.GetComponent<Canvas>().enabled = true;
-				CanvasBKG.GetComponent<SpriteRenderer>().enabled = true;
-				BlackScreen.SetActive(true);
-				for(int a = 0; a < 8; a++)
-				{
-					Agents[a].SetActive(false);
-				}
-				yield return new WaitForSeconds(fixationDuration);
-				CanvasBKG.GetComponent<SpriteRenderer>().enabled = false;
-				BlackScreen.SetActive(false);
-				CanvasObject.GetComponent<Canvas>().enabled = false;
-				for(int a = 0; a < 8; a++)
-				{
-					Agents[a].SetActive(true);
-				}
-
-				DominantColor=Random.Range(1,3);	// DC=1: Orange; DC=2: Green
-				C2=StimulusChange(gridSize, DominantColor, SessionInd);
-				StartCoroutine(C2);
-				
-				raiseHandCoroutine = RaiseHand(DominantColor);
-				StartCoroutine(raiseHandCoroutine);
-				
-				while(!(Input.GetKey(KeyCode.RightArrow)|Input.GetKey(KeyCode.LeftArrow))& (Time.time-referenceTime1)<trialDuration)
-				{
-					yield return new WaitForSeconds(Time.deltaTime);
-				}
-				if(Input.GetKey(KeyCode.RightArrow))
-				{
-					responses[trialCounter, 5] = 1;
-					Input.ResetInputAxes();
-				}
-				else if(Input.GetKey(KeyCode.LeftArrow))
-				{
-					responses[trialCounter, 5] = 2;
-					Input.ResetInputAxes();
-				}
-				else
-				{
-					responses[trialCounter, 5] = 0;
-				}
-				responses[trialCounter,0]=SessionInd; 	// if index==1, it is practice session, else, it is test session
-				responses[trialCounter,1]=catchInd; 	// it is 1 if it is a catch. Otherwise, it is zero
-				responses[trialCounter,2]=R; 			// radius of the circle that agents are standing in it (lower R, higher density)
-				responses[trialCounter,3]=numberOfAgents; 			// number of responding agents
-				responses[trialCounter,4]=LR; 			// right hand:2; left hand:1
-				responses[trialCounter,6]=Time.time-referenceTime1; 			// response time
-				responses[trialCounter,7]=congruencyFactor;
-				print("Responses:  "+responses[trialCounter,0]+ "  ,  "+responses[trialCounter,1]+"  ,  "+responses[trialCounter,2]+"  ,  "+responses[trialCounter,3]+"  ,  "+responses[trialCounter,4]+"  ,  "+responses[trialCounter,5]+"  ,  "+responses[trialCounter,6]+"  ,  "+responses[trialCounter,7]);
-				StopCoroutine(C2);
-				//dataStringCoroutine = DataStringMaker(responses, trialCounter, MyList);
-				//StartCoroutine(dataStringCoroutine);
-				yield return new WaitForSeconds(trialDuration-(Time.time-referenceTime1));
-				StopCoroutine(raiseHandCoroutine);
-			}
+			// for(int it1 = 0; it1 < numberOfTestTrials; it1++)		// main session block 1
+			// {
+			// 	referenceTime1=Time.time;
+			// 	SessionInd=1;						// SessionInd indicates the practice trials (1) and test trials (2)
+			// 	trialCounter=trialCounter+1;
+			// 	
+			// 	CanvasObject.GetComponent<Canvas>().enabled = true;
+			// 	CanvasBKG.GetComponent<SpriteRenderer>().enabled = true;
+			// 	BlackScreen.SetActive(true);
+			// 	for(int a = 0; a < 8; a++)
+			// 	{
+			// 		Agents[a].SetActive(false);
+			// 	}
+			// 	yield return new WaitForSeconds(fixationDuration);
+			// 	CanvasBKG.GetComponent<SpriteRenderer>().enabled = false;
+			// 	BlackScreen.SetActive(false);
+			// 	CanvasObject.GetComponent<Canvas>().enabled = false;
+			// 	for(int a = 0; a < 8; a++)
+			// 	{
+			// 		Agents[a].SetActive(true);
+			// 	}
+			//
+			// 	DominantColor=Random.Range(1,3);	// DC=1: Orange; DC=2: Green
+			// 	C2=StimulusChange(gridSize, DominantColor, SessionInd);
+			// 	StartCoroutine(C2);
+			// 	
+			// 	raiseHandCoroutine = RaiseHand(DominantColor);
+			// 	StartCoroutine(raiseHandCoroutine);
+			// 	
+			// 	while(!(Input.GetKey(KeyCode.RightArrow)|Input.GetKey(KeyCode.LeftArrow))& (Time.time-referenceTime1)<trialDuration)
+			// 	{
+			// 		yield return new WaitForSeconds(Time.deltaTime);
+			// 	}
+			// 	if(Input.GetKey(KeyCode.RightArrow))
+			// 	{
+			// 		responses[trialCounter, 5] = 1;
+			// 		Input.ResetInputAxes();
+			// 	}
+			// 	else if(Input.GetKey(KeyCode.LeftArrow))
+			// 	{
+			// 		responses[trialCounter, 5] = 2;
+			// 		Input.ResetInputAxes();
+			// 	}
+			// 	else
+			// 	{
+			// 		responses[trialCounter, 5] = 0;
+			// 	}
+			// 	responses[trialCounter,0]=SessionInd; 	// if index==1, it is practice session, else, it is test session
+			// 	responses[trialCounter,1]=catchInd; 	// it is 1 if it is a catch. Otherwise, it is zero
+			// 	responses[trialCounter,2]=R; 			// radius of the circle that agents are standing in it (lower R, higher density)
+			// 	responses[trialCounter,3]=numberOfAgents; 			// number of responding agents
+			// 	responses[trialCounter,4]=LR; 			// right hand:2; left hand:1
+			// 	responses[trialCounter,6]=Time.time-referenceTime1; 			// response time
+			// 	responses[trialCounter,7]=congruencyFactor;
+			// 	print("Responses:  "+responses[trialCounter,0]+ "  ,  "+responses[trialCounter,1]+"  ,  "+responses[trialCounter,2]+"  ,  "+responses[trialCounter,3]+"  ,  "+responses[trialCounter,4]+"  ,  "+responses[trialCounter,5]+"  ,  "+responses[trialCounter,6]+"  ,  "+responses[trialCounter,7]);
+			// 	StopCoroutine(C2);
+			// 	//dataStringCoroutine = DataStringMaker(responses, trialCounter, MyList);
+			// 	//StartCoroutine(dataStringCoroutine);
+			// 	yield return new WaitForSeconds(trialDuration-(Time.time-referenceTime1));
+			// 	StopCoroutine(raiseHandCoroutine);
+			// }
 			
 			// after block1
 			for(int a = 0; a < 8; a++)
@@ -466,89 +576,175 @@ public class ExperimentManagerGlove : MonoBehaviour
 			// ............................................
 			
 			
-			
-			
-			
-			for(int it2 = 0; it2 < numberOfTestTrials; it2++)		// main session block 2
+			for(int it2 = 0; it2 < numberOfTestTrials; it2++)		// practice session
 			{
-				referenceTime1=Time.time;
-				SessionInd=1;						// SessionInd indicates the practice trials (1) and test trials (2)
-				trialCounter=trialCounter+1;
-				
-				CanvasObject.GetComponent<Canvas>().enabled = true;
-				CanvasBKG.GetComponent<SpriteRenderer>().enabled = true;
-				BlackScreen.SetActive(true);
-				for(int a = 0; a < 8; a++)
-				{
-					Agents[a].SetActive(false);
-				}
-				yield return new WaitForSeconds(fixationDuration);
-				CanvasBKG.GetComponent<SpriteRenderer>().enabled = false;
-				BlackScreen.SetActive(false);
-				CanvasObject.GetComponent<Canvas>().enabled = false;
-				for(int a = 0; a < 8; a++)
-				{
-					Agents[a].SetActive(true);
-				}
-				// fixationSign.SetActive(true);		// fixation cross is on for "fixationDuration" seconds
-				// yield return new WaitForSeconds(fixationDuration);
-				// fixationSign.SetActive(false);
+			referenceTime1=Time.time;
+			SessionInd=3;						// SessionInd indicates the practice trials (1) and test trials (2)
+			trialCounter=trialCounter+1;
+			
 
-				DominantColor=Random.Range(1,3);	// DC=1: Orange; DC=2: Green
-				C2=StimulusChange(gridSize, DominantColor, SessionInd);
-				StartCoroutine(C2);
-				
-				raiseHandCoroutine = RaiseHand(DominantColor);
-				StartCoroutine(raiseHandCoroutine);
-				
-				while(!(Input.GetKey(KeyCode.RightArrow)|Input.GetKey(KeyCode.LeftArrow))& (Time.time-referenceTime1)<trialDuration)
-				{
-					yield return new WaitForSeconds(Time.deltaTime);
-				}
-				if(Input.GetKey(KeyCode.RightArrow))
-				{
-					responses[trialCounter, 5] = 1;
-					Input.ResetInputAxes();
-				}
-				else if(Input.GetKey(KeyCode.LeftArrow))
-				{
-					responses[trialCounter, 5] = 2;
-					Input.ResetInputAxes();
-				}
-				else
-				{
-					responses[trialCounter, 5] = 0;
-				}
-				responses[trialCounter,0]=SessionInd; 	// if index==1, it is practice session, else, it is test session
-				responses[trialCounter,1]=catchInd; 	// it is 1 if it is a catch. Otherwise, it is zero
-				responses[trialCounter,2]=R; 			// radius of the circle that agents are standing in it (lower R, higher density)
-				responses[trialCounter,3]=numberOfAgents; 			// number of responding agents
-				responses[trialCounter,4]=LR; 			// right hand:2; left hand:1
-				responses[trialCounter,6]=Time.time-referenceTime1; 			// response time
-				print("Responses:  "+responses[trialCounter,0]+ "  ,  "+responses[trialCounter,1]+"  ,  "+responses[trialCounter,2]+"  ,  "+responses[trialCounter,3]+"  ,  "+responses[trialCounter,4]+"  ,  "+responses[trialCounter,5]+"  ,  "+responses[trialCounter,6]+"  ,  "+responses[trialCounter,7]);
-				StopCoroutine(C2);
-				yield return new WaitForSeconds(trialDuration-(Time.time-referenceTime1));
-				StopCoroutine(raiseHandCoroutine);
-				// after block2
-				if (rund==0 & it2 == numberOfTestTrials-1)
-				{
-					for(int a = 0; a < 8; a++)
-					{
-						Agents[a].SetActive(false);
-					}
-					CanvasObject.GetComponent<Canvas>().enabled = true;
-					CanvasBKG.GetComponent<SpriteRenderer>().enabled = true;
-					Instruction2.SetActive(true);
-					yield return new WaitForSeconds(10f);
-					CanvasBKG.GetComponent<SpriteRenderer>().enabled = false;
-					Instruction2.SetActive(false);
-					CanvasObject.GetComponent<Canvas>().enabled = false;
-					for(int a = 0; a < 8; a++)
-					{
-						Agents[a].SetActive(true);
-					}
-				}
+			DominantColor=Random.Range(1,3);	// DC=1: Orange; DC=2: Green
+			C2=StimulusChange(gridSize, DominantColor, SessionInd);
+			StartCoroutine(C2);
+			
+			raiseHandCoroutine = RaiseHand(DominantColor);
+			StartCoroutine(raiseHandCoroutine);
+			
+			while(!((Listner.lUp || Listner.rUp) || (Time.time - referenceTime1) >= trialDuration))
+			{
+				yield return new WaitForSeconds(Time.deltaTime);
 			}
+
+			if(Listner.lUp)
+			{
+				responses[trialCounter, 5] = 2; // Left controller is above the threshold
+			}
+			else if(Listner.rUp)
+			{
+				responses[trialCounter, 5] = 1; // Right controller is above the threshold
+			}
+			else
+			{
+				responses[trialCounter, 5] = 0; // Neither controller is above the threshold
+			}
+			responses[trialCounter,0]=SessionInd; 	// if index==1, it is practice session, else, it is test session
+			responses[trialCounter,1]=catchInd; 	// it is 1 if it is a catch. Otherwise, it is zero
+			responses[trialCounter,2]=R; 			// radius of the circle that agents are standing in it (lower R, higher density)
+			responses[trialCounter,3]=numberOfAgents; 			// number of responding agents
+			responses[trialCounter,4]=LR; 			// right hand:2; left hand:1
+			responses[trialCounter,6]=Time.time-referenceTime1; 			// response time
+			responses[trialCounter,7]=congruencyFactor;
+			
+			raisedGloveColor=responses[trialCounter,5];
+			
+			
+			CanvasObject.GetComponent<Canvas>().enabled = true;
+			CanvasBKG.GetComponent<SpriteRenderer>().enabled = true;
+
+			for(int a = 0; a < 8; a++)
+			{
+				Agents[a].SetActive(false);
+			}
+			fixationSign.SetActive(true);
+			yield return new WaitForSeconds(fixationDuration);
+			fixationSign.SetActive(false);
+			// if((responses[trialCounter, 5]!=0 & raisedGloveColor==2 & DominantColor==2) | (responses[trialCounter, 5]!=0 & raisedGloveColor==1 & DominantColor==1))
+			// {
+			// 	CorrectScreen.SetActive(true);
+			// 	print("true");
+			// }
+			// else if(responses[trialCounter, 5]!=0)
+			// {
+			// 	WrongScreen.SetActive(true);
+			// 	print("wrong");
+			// }
+			// else
+			// {
+			// 	MissedScreen.SetActive(true);
+			// 	print("missed");
+			// }
+			
+			StopCoroutine(C2);
+			//dataStringCoroutine = DataStringMaker(responses, trialCounter, MyList);
+			//StartCoroutine(dataStringCoroutine);
+			
+			StopCoroutine(raiseHandCoroutine);
+			yield return new WaitForSeconds(trialDuration-(Time.time-referenceTime1));
+			print("trialDuration: "+trialDuration+" , "+Time.time+ " , " + referenceTime1);
+			CanvasBKG.GetComponent<SpriteRenderer>().enabled = false;
+			CanvasObject.GetComponent<Canvas>().enabled = false;
+			//if (responses[trialCounter, 5]==0)
+				yield return new WaitForSeconds(fixationDuration);
+			for(int a = 0; a < 8; a++)
+			{
+				Agents[a].SetActive(true);
+			}
+			CorrectScreen.SetActive(false);
+			WrongScreen.SetActive(false);
+			MissedScreen.SetActive(false);
+			}
+			
+			
+			// for(int it2 = 0; it2 < numberOfTestTrials; it2++)		// main session block 2
+			// {
+			// 	referenceTime1=Time.time;
+			// 	SessionInd=1;						// SessionInd indicates the practice trials (1) and test trials (2)
+			// 	trialCounter=trialCounter+1;
+			// 	
+			// 	CanvasObject.GetComponent<Canvas>().enabled = true;
+			// 	CanvasBKG.GetComponent<SpriteRenderer>().enabled = true;
+			// 	BlackScreen.SetActive(true);
+			// 	for(int a = 0; a < 8; a++)
+			// 	{
+			// 		Agents[a].SetActive(false);
+			// 	}
+			// 	yield return new WaitForSeconds(fixationDuration);
+			// 	CanvasBKG.GetComponent<SpriteRenderer>().enabled = false;
+			// 	BlackScreen.SetActive(false);
+			// 	CanvasObject.GetComponent<Canvas>().enabled = false;
+			// 	for(int a = 0; a < 8; a++)
+			// 	{
+			// 		Agents[a].SetActive(true);
+			// 	}
+			// 	// fixationSign.SetActive(true);		// fixation cross is on for "fixationDuration" seconds
+			// 	// yield return new WaitForSeconds(fixationDuration);
+			// 	// fixationSign.SetActive(false);
+			//
+			// 	DominantColor=Random.Range(1,3);	// DC=1: Orange; DC=2: Green
+			// 	C2=StimulusChange(gridSize, DominantColor, SessionInd);
+			// 	StartCoroutine(C2);
+			// 	
+			// 	raiseHandCoroutine = RaiseHand(DominantColor);
+			// 	StartCoroutine(raiseHandCoroutine);
+			// 	
+			// 	while(!(Input.GetKey(KeyCode.RightArrow)|Input.GetKey(KeyCode.LeftArrow))& (Time.time-referenceTime1)<trialDuration)
+			// 	{
+			// 		yield return new WaitForSeconds(Time.deltaTime);
+			// 	}
+			// 	if(Input.GetKey(KeyCode.RightArrow))
+			// 	{
+			// 		responses[trialCounter, 5] = 1;
+			// 		Input.ResetInputAxes();
+			// 	}
+			// 	else if(Input.GetKey(KeyCode.LeftArrow))
+			// 	{
+			// 		responses[trialCounter, 5] = 2;
+			// 		Input.ResetInputAxes();
+			// 	}
+			// 	else
+			// 	{
+			// 		responses[trialCounter, 5] = 0;
+			// 	}
+			// 	responses[trialCounter,0]=SessionInd; 	// if index==1, it is practice session, else, it is test session
+			// 	responses[trialCounter,1]=catchInd; 	// it is 1 if it is a catch. Otherwise, it is zero
+			// 	responses[trialCounter,2]=R; 			// radius of the circle that agents are standing in it (lower R, higher density)
+			// 	responses[trialCounter,3]=numberOfAgents; 			// number of responding agents
+			// 	responses[trialCounter,4]=LR; 			// right hand:2; left hand:1
+			// 	responses[trialCounter,6]=Time.time-referenceTime1; 			// response time
+			// 	print("Responses:  "+responses[trialCounter,0]+ "  ,  "+responses[trialCounter,1]+"  ,  "+responses[trialCounter,2]+"  ,  "+responses[trialCounter,3]+"  ,  "+responses[trialCounter,4]+"  ,  "+responses[trialCounter,5]+"  ,  "+responses[trialCounter,6]+"  ,  "+responses[trialCounter,7]);
+			// 	StopCoroutine(C2);
+			// 	yield return new WaitForSeconds(trialDuration-(Time.time-referenceTime1));
+			// 	StopCoroutine(raiseHandCoroutine);
+			// 	// after block2
+			// 	if (rund==0 & it2 == numberOfTestTrials-1)
+			// 	{
+			// 		for(int a = 0; a < 8; a++)
+			// 		{
+			// 			Agents[a].SetActive(false);
+			// 		}
+			// 		CanvasObject.GetComponent<Canvas>().enabled = true;
+			// 		CanvasBKG.GetComponent<SpriteRenderer>().enabled = true;
+			// 		Instruction2.SetActive(true);
+			// 		yield return new WaitForSeconds(10f);
+			// 		CanvasBKG.GetComponent<SpriteRenderer>().enabled = false;
+			// 		Instruction2.SetActive(false);
+			// 		CanvasObject.GetComponent<Canvas>().enabled = false;
+			// 		for(int a = 0; a < 8; a++)
+			// 		{
+			// 			Agents[a].SetActive(true);
+			// 		}
+			// 	}
+			// }
 		}
 		
 		
