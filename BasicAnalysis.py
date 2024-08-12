@@ -32,3 +32,12 @@ AgentsColor=(MainTrials.iloc[:,4]==MainTrials.iloc[:,7]).astype(int)
 ParticipantColor=(MainTrials.iloc[:,5]==0).astype(int)
 Follow=(AgentsColor==ParticipantColor).astype(int)
 FollowPercentage=sum(Follow)/len(Follow)
+# Response time analysis ------------------------------------------------------
+MainFollow=MainTrials[AgentsColor==ParticipantColor]
+MainUnfollow=MainTrials[AgentsColor!=ParticipantColor]
+from statistics import mean
+meanRT=mean(MainTrials.iloc[:,6])
+if (not MainFollow.empty):
+    meanRT_Follow=mean(MainFollow.iloc[:,6])
+if (not MainUnfollow.empty):
+    meanRT_Unfollow=mean(MainUnfollow.iloc[:,6])
