@@ -15,7 +15,7 @@ df = pd.read_csv("Asi.csv")
 # Therefore,if column6=1, participant response was blue, and if column6=0, yellow!
 #==============================================================================
 Threshold=df.iloc[:,3]
-mainTrials=df[Threshold==6]     # in main trials, the ration of blue to yellow pixels is 50-50
+# mainTrials=df[Threshold==6]     # in main trials, the ration of blue to yellow pixels is 50-50
 
 df.iloc[:,]
 
@@ -24,3 +24,11 @@ CatchTrials=df[df.iloc[:,1]==1]
 Correct=((CatchTrials.iloc[:,2]==0.6) & (CatchTrials.iloc[:,5]==1)) | ((CatchTrials.iloc[:,2]==0.4) & (CatchTrials.iloc[:,5]==2))
 
 PercentCorrect=sum(Correct.astype(int))/len(CatchTrials)    # just catch trials
+# -----------------------------------------------------------------------------
+# Follow percentage -----------------------------------------------------------
+MainTrials=df[(df.iloc[:,0]==2) & (df.iloc[:,1]==0)]    # or, instead, df[df.iloc[:,2]=0.5]
+# if AgentsColor=0, then the agents' response was "yellow", if AgentsColor=1, then it is "blue"
+AgentsColor=(MainTrials.iloc[:,4]==MainTrials.iloc[:,7]).astype(int)
+ParticipantColor=(MainTrials.iloc[:,5]==0).astype(int)
+Follow=(AgentsColor==ParticipantColor).astype(int)
+FollowPercentage=sum(Follow)/len(Follow)
